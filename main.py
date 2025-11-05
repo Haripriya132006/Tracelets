@@ -1,104 +1,122 @@
-import heapq
-from floors import floor1,floor2,floor3,floor4,floor5
-def check_bidirectional(graph):
-    issues = []
-    for node, neighbors in graph.items():
-        for neigh, w in neighbors:
-            if neigh not in graph:
-                issues.append(f"{node} → {neigh} exists but {neigh} not in graph")
-            else:
-                # Instead of checking exact tuple, check if neigh has node with same weight
-                if not any(n == node and wt == w for n, wt in graph[neigh]):
-                    issues.append(f"{node} → {neigh} exists but not {neigh} → {node}")
-    return issues
+from fastapi import FastAPI, Request, File, UploadFile, Form, Response
+from fastapi.responses import HTMLResponse, JSONResponse, StreamingResponse
+from fastapi.templating import Jinja2Templates
+from pymongo import MongoClient
+from bson import Binary
+from datetime import datetime, timedelta
+from io import BytesIO
+import uuid
+from builtin import multi_floor_shortest_path  # Your Saveetha map pathfinder
+
+# ---------------- App Setup ----------------
+app = FastAPI()
+templates = Jinja2Templates(directory="templates")
+
+# ---------------- MongoDB Setup ----------------
+MONGO_URI = "mongodb+srv://haripriyaks13_db_user:vanihari123@traceletcluster.tuizrqx.mongodb.net/traceletDB?retryWrites=true&w=majority"
+client = MongoClient(MONGO_URI)
+db = client["traceletDB"]
+maps_collection = db["maps"]
+
+print ("continue 1")
+
+# ---------------- Config ----------------
+ALLOWED_EXTENSIONS = {"jpg", "jpeg", "png", "webp", "img"}
+print("continue 2")
+
+# ---------------- Helpers ----------------
+def delete_expired_maps():
+    """Delete maps older than 10 days"""
+    expiry_date = datetime.utcnow() - timedelta(days=10)
+    maps_collection.delete_many({"uploaded_at": {"$lt": expiry_date}})
+
+# ---------------- Routes ----------------
+@app.get("/", response_class=HTMLResponse)
+def home(request: Request, response: Response):
+    """Render home page showing available maps"""
+    delete_expired_maps()
+
+    # Handle session cookies
+    session_id = request.cookies.get("session_id")
+    if not session_id:
+        session_id = str(uuid.uuid4())
+        response.set_cookie(key="session_id", value=session_id, httponly=True)
+
+    uploaded_maps = list(maps_collection.find({}, {"_id": 0, "map_name": 1}))
+    return templates.TemplateResponse("index.html", {
+        "request": request,
+        "builtin_map": "Saveetha Engineering College",
+        "uploaded_maps": uploaded_maps
+    })
 
 
-# res=check_bidirectional(floor5)
-# print(res)
-# res=check_bidirectional(floor2)
-# print(res)
-# res=check_bidirectional(floor3)
-# print(res)
-
-def shortest_path(graph, start, goal):
-    pq = [(0, start, [])]  # (distance, node, path_so_far)
-    visited = set()
-
-    while pq:
-        dist, node, path = heapq.heappop(pq)
-        if node in visited:
-            continue
-        visited.add(node)
-        path = path + [node]
-
-        if node == goal:
-            return dist, path
-
-        for neigh, w in graph.get(node, []):
-            if neigh not in visited:
-                heapq.heappush(pq, (dist + w, neigh, path))
-
-    return float("inf"), []
+@app.get("/shortest-path")
+def get_shortest_path(start: str, goal: str):
+    """Run built-in Saveetha map pathfinder"""
+    try:
+        dist, path = multi_floor_shortest_path(start, goal)
+        return JSONResponse({
+            "distance": dist,
+            "path": path,
+            "directions": " → ".join(path)
+        })
+    except Exception as e:
+        return JSONResponse({"error": str(e)}, status_code=400)
 
 
-# import heapq
-# from floors import floor1, floor2
+@app.post("/upload-map")
+async def upload_map(file: UploadFile = File(...), map_name: str = Form(None)):
+    """Upload a map image directly to MongoDB — no session required"""
+    ext = file.filename.split(".")[-1].lower()
+    if ext not in ALLOWED_EXTENSIONS:
+        return JSONResponse({"error": "Unsupported file type"}, status_code=400)
 
-FLOORS = {
-    "1": floor1,
-    "2": floor2,
-    "3":floor3,
-    "4":floor4,
-    "5":floor5,
+    contents = await file.read()
 
-    # add floor3, floor4 later
-}
+    maps_collection.insert_one({
+        "map_name": map_name or file.filename,
+        "file_data": Binary(contents),
+        "file_type": ext,
+        "uploaded_at": datetime.utcnow(),
+        # no session_id — public uploads
+    })
 
-# all lift IDs (must exist on every floor)
-LIFTS = ["1", "2", "3", "4"]
-
-def get_floor_num(room):
-    """First digit of room code = floor number"""
-    return room[0]
-
-def nearest_lift(graph, start, floor_num):
-    """Find nearest lift node from a start room in a single floor graph"""
-    best = (float("inf"), None, [])
-    for lift in LIFTS:
-        lift_node = floor_num + lift  # e.g. "1" + "1" = "11"
-        if lift_node in graph:
-            dist, path = shortest_path(graph, start, lift_node)
-            if dist < best[0]:
-                best = (dist, lift_node, path)
-    return best  # (distance, lift_node, path)
-
-def multi_floor_shortest_path(start, goal):
-    start_floor = get_floor_num(start)
-    goal_floor = get_floor_num(goal)
-
-    if start_floor == goal_floor:
-        return shortest_path(FLOORS[start_floor], start, goal)
-
-    # Step 1: nearest lift on start floor
-    g1 = FLOORS[start_floor]
-    d1, lift_start, path1 = nearest_lift(g1, start, start_floor)
-    if not lift_start:
-        raise ValueError(f"No lifts available on floor {start_floor}")
-
-    # Step 2: vertical travel
-    lift_id = lift_start[1:]       # e.g. "11" → "1"
-    lift_dest = goal_floor + lift_id   # e.g. "2" + "1" = "21"
-
-    # Step 3: path from lift to destination on goal floor
-    g2 = FLOORS[goal_floor]
-    d2, path2 = shortest_path(g2, lift_dest, goal)
-    if d2 == float("inf"):
-        raise ValueError(f"No path from lift {lift_dest} to {goal} on floor {goal_floor}")
-
-    total_dist = d1 + d2
-    total_path = path1 + path2[1:]  # avoid duplicating lift
-    return total_dist, total_path
+    return JSONResponse({
+        "message": f"Map '{map_name or file.filename}' uploaded successfully!"
+    })
 
 
-res = multi_floor_shortest_path("1371", "5451")
-print(res)
+
+@app.get("/map-image/{map_name}")
+def get_map_image(map_name: str):
+    """Serve a map image stored in MongoDB"""
+    doc = maps_collection.find_one({"map_name": map_name})
+    if not doc or "file_data" not in doc:
+        return JSONResponse({"error": "Image not found"}, status_code=404)
+
+    return StreamingResponse(
+        BytesIO(doc["file_data"]),
+        media_type=f"image/{doc['file_type']}"
+    )
+
+
+@app.post("/delete-session")
+def delete_session(request: Request, response: Response):
+    """Delete all maps for this session and clear cookies"""
+    session_id = request.cookies.get("session_id")
+    if session_id:
+        maps_collection.delete_many({"session_id": session_id})
+        response.delete_cookie("session_id")
+        return JSONResponse({"message": "Session cleared and maps deleted."})
+    return JSONResponse({"message": "No active session."})
+@app.get("/map-image/{map_name}")
+def get_map_image(map_name: str):
+    """Serve a map image stored in MongoDB"""
+    doc = maps_collection.find_one({"map_name": map_name})
+    if not doc or "file_data" not in doc:
+        return JSONResponse({"error": "Image not found"}, status_code=404)
+
+    return StreamingResponse(
+        BytesIO(doc["file_data"]),
+        media_type=f"image/{doc['file_type']}"
+    )

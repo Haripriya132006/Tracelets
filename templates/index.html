@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Tracelet Maps</title>
+  <style>
+    canvas {
+      border: 2px solid #444;
+      margin-top: 20px;
+      max-width: 90%;
+      height: auto;
+    }
+  </style>
+</head>
+<body>
+  <h2>Select a Map</h2>
+  <form id="mapForm" action="/shortest-path" method="get">
+    <select name="map" id="mapSelect" required>
+      <option value="Saveetha Engineering College">Saveetha Engineering College (Built-in)</option>
+      {% for m in uploaded_maps %}
+      <option value="{{ m.map_name }}">{{ m.map_name }}</option>
+      {% endfor %}
+    </select>
+    <br><br>
+    <input type="text" name="start" id="startInput" placeholder="Enter start or click on map" required>
+    <input type="text" name="goal" id="goalInput" placeholder="Enter destination or click on map" required>
+    <button type="submit">Find Path</button>
+  </form>
+
+  <hr>
+  <h3>Upload a new map</h3>
+  <form id="uploadForm" enctype="multipart/form-data">
+    <input type="text" name="map_name" placeholder="Enter map name (optional)">
+    <input type="file" name="file" accept=".jpg,.jpeg,.png,.webp,.img" required>
+    <button type="submit">Upload</button>
+  </form>
+
+  <canvas id="mapCanvas"></canvas>
+
+  <script>
+    const canvas = document.getElementById("mapCanvas");
+    const ctx = canvas.getContext("2d");
+    let image = new Image();
+    let clickCount = 0;
+
+    document.getElementById("mapSelect").addEventListener("change", async (e) => {
+      const selectedMap = e.target.value;
+      clickCount = 0;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      if (selectedMap !== "Saveetha Engineering College") {
+        image.src = `/map-image/${selectedMap}`;
+        image.onload = () => {
+          canvas.width = image.width;
+          canvas.height = image.height;
+          ctx.drawImage(image, 0, 0);
+        };
+      } else {
+        canvas.width = 0;
+        canvas.height = 0;
+      }
+    });
+
+    canvas.addEventListener("click", (e) => {
+      const rect = canvas.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+
+      if (clickCount === 0) {
+        ctx.fillStyle = "green";
+        document.getElementById("startInput").value = `${x.toFixed(1)},${y.toFixed(1)}`;
+        ctx.beginPath();
+        ctx.arc(x, y, 5, 0, 2 * Math.PI);
+        ctx.fill();
+        clickCount = 1;
+      } else if (clickCount === 1) {
+        ctx.fillStyle = "red";
+        document.getElementById("goalInput").value = `${x.toFixed(1)},${y.toFixed(1)}`;
+        ctx.beginPath();
+        ctx.arc(x, y, 5, 0, 2 * Math.PI);
+        ctx.fill();
+        clickCount = 2;
+      }
+    });
+
+    document.getElementById("uploadForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const formData = new FormData(e.target);
+      const res = await fetch("/upload-map", { method: "POST", body: formData });
+      const data = await res.json();
+      alert(data.message);
+      window.location.reload();
+    });
+  </script>
+</body>
+</html>
