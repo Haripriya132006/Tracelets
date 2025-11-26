@@ -33,6 +33,24 @@
     <input type="file" name="file" accept=".jpg,.jpeg,.png,.webp,.img" required>
     <button type="submit">Upload</button>
   </form>
+<h2>External Map Path Finder</h2>
+
+<label>Select uploaded map:</label>
+<select id="externalMapSelect"></select>
+
+<br><br>
+
+<label>Start (x,y):</label>
+<input type="text" id="extStart" placeholder="e.g. 124,432">
+
+<label>End (x,y):</label>
+<input type="text" id="extEnd" placeholder="e.g. 560,265">
+
+<button onclick="findExternalPath()">Find Path</button>
+
+<br><br>
+
+<img id="externalHighlighted" style="max-width:90%; border:1px solid #aaa;">
 
   <canvas id="mapCanvas"></canvas>
 
@@ -90,6 +108,44 @@
       alert(data.message);
       window.location.reload();
     });
+    async function findExternalPath() {
+    const mapName = document.getElementById("externalMapSelect").value;
+    const s = document.getElementById("extStart").value.split(",");
+    const g = document.getElementById("extEnd").value.split(",");
+
+    const sx = parseFloat(s[0]), sy = parseFloat(s[1]);
+    const gx = parseFloat(g[0]), gy = parseFloat(g[1]);
+
+    const url = `/external-path?map_name=${mapName}&sx=${sx}&sy=${sy}&gx=${gx}&gy=${gy}`;
+
+    document.getElementById("externalHighlighted").src = url;
+}
+
   </script>
+  <script>
+async function loadExternalMaps() {
+    const res = await fetch("/");
+    const html = await res.text();
+
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(html, "text/html");
+
+    const select = document.getElementById("externalMapSelect");
+
+    // Get all maps from existing dropdown in the HTML
+    doc.querySelectorAll("#mapSelect option").forEach(opt => {
+        if (opt.value !== "Saveetha Engineering College") {
+            const newOpt = document.createElement("option");
+            newOpt.value = opt.value;
+            newOpt.textContent = opt.textContent;
+            select.appendChild(newOpt);
+        }
+    });
+}
+
+// Load maps on page start
+loadExternalMaps();
+</script>
+
 </body>
 </html>
