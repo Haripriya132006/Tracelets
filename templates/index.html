@@ -1,150 +1,269 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Tracelet Maps</title>
+  <meta charset="utf-8">
+  <title>Tracelet – Indoor Navigation</title>
+
   <style>
-    canvas {
-      border: 2px solid #444;
-      margin-top: 20px;
-      max-width: 90%;
-      height: auto;
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+    }
+
+    h2, h3 {
+      margin-bottom: 8px;
+    }
+
+    .controls {
+      margin-bottom: 12px;
+    }
+
+    input, select, button {
+      padding: 8px;
+      margin: 6px 6px 6px 0;
+      font-size: 14px;
+    }
+
+    button {
+      background: #0b66c3;
+      color: white;
+      border: none;
+      border-radius: 3px;
+      cursor: pointer;
+    }
+
+    #mapCanvas {
+      border: 2px solid #333;
+      display: none;
+      max-width: 95%;
+      margin-top: 12px;
+    }
+
+    #status {
+      margin-top: 8px;
+      color: #444;
+    }
+
+    #pathOutput {
+      margin-top: 10px;
+      font-weight: bold;
+      color: #222;
     }
   </style>
 </head>
+
 <body>
-  <h2>Select a Map</h2>
-  <form id="mapForm" action="/shortest-path" method="get">
-    <select name="map" id="mapSelect" required>
-      <option value="Saveetha Engineering College">Saveetha Engineering College (Built-in)</option>
-      {% for m in uploaded_maps %}
+
+<h2>Tracelet – Indoor Navigation</h2>
+
+<div class="controls">
+  <label><b>Select Map:</b></label>
+  <select id="mapSelect">
+    <option value="Saveetha Engineering College">
+      Saveetha Engineering College
+    </option>
+    {% for m in uploaded_maps %}
       <option value="{{ m.map_name }}">{{ m.map_name }}</option>
-      {% endfor %}
-    </select>
-    <br><br>
-    <input type="text" name="start" id="startInput" placeholder="Enter start or click on map" required>
-    <input type="text" name="goal" id="goalInput" placeholder="Enter destination or click on map" required>
-    <button type="submit">Find Path</button>
-  </form>
+    {% endfor %}
+  </select>
 
-  <hr>
-  <h3>Upload a new map</h3>
-  <form id="uploadForm" enctype="multipart/form-data">
-    <input type="text" name="map_name" placeholder="Enter map name (optional)">
-    <input type="file" name="file" accept=".jpg,.jpeg,.png,.webp,.img" required>
-    <button type="submit">Upload</button>
-  </form>
-<h2>External Map Path Finder</h2>
+  <br>
 
-<label>Select uploaded map:</label>
-<select id="externalMapSelect"></select>
+  <input type="text" id="startInput" placeholder="Start Room">
+  <input type="text" id="goalInput" placeholder="Destination Room">
+  <button id="findPathBtn">Find Path</button>
 
-<br><br>
+  <div id="status">
+    Enter start and destination rooms for Saveetha Engineering College.
+  </div>
 
-<label>Start (x,y):</label>
-<input type="text" id="extStart" placeholder="e.g. 124,432">
+  <div id="pathOutput"></div>
+</div>
 
-<label>End (x,y):</label>
-<input type="text" id="extEnd" placeholder="e.g. 560,265">
+<canvas id="mapCanvas"></canvas>
 
-<button onclick="findExternalPath()">Find Path</button>
+<hr>
 
-<br><br>
+<h3>Upload Indoor Map (Image-based)</h3>
+<form id="uploadForm" enctype="multipart/form-data">
+  <input type="text" name="map_name" placeholder="Map name (optional)">
+  <input type="file" name="file" accept=".jpg,.jpeg,.png,.webp" required>
+  <button type="submit">Upload</button>
+</form>
 
-<img id="externalHighlighted" style="max-width:90%; border:1px solid #aaa;">
+<script>
+/* ---------------- ELEMENTS ---------------- */
+const mapSelect   = document.getElementById("mapSelect");
+const startInput  = document.getElementById("startInput");
+const goalInput   = document.getElementById("goalInput");
+const findPathBtn = document.getElementById("findPathBtn");
+const canvas      = document.getElementById("mapCanvas");
+const ctx         = canvas.getContext("2d");
+const status      = document.getElementById("status");
+const pathOutput  = document.getElementById("pathOutput");
+const uploadForm  = document.getElementById("uploadForm");
 
-  <canvas id="mapCanvas"></canvas>
+/* ---------------- STATE ---------------- */
+let img = new Image();
+let startPt = null;
+let goalPt = null;
 
-  <script>
-    const canvas = document.getElementById("mapCanvas");
-    const ctx = canvas.getContext("2d");
-    let image = new Image();
-    let clickCount = 0;
-
-    document.getElementById("mapSelect").addEventListener("change", async (e) => {
-      const selectedMap = e.target.value;
-      clickCount = 0;
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-      if (selectedMap !== "Saveetha Engineering College") {
-        image.src = `/map-image/${selectedMap}`;
-        image.onload = () => {
-          canvas.width = image.width;
-          canvas.height = image.height;
-          ctx.drawImage(image, 0, 0);
-        };
-      } else {
-        canvas.width = 0;
-        canvas.height = 0;
-      }
-    });
-
-    canvas.addEventListener("click", (e) => {
-      const rect = canvas.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
-
-      if (clickCount === 0) {
-        ctx.fillStyle = "green";
-        document.getElementById("startInput").value = `${x.toFixed(1)},${y.toFixed(1)}`;
-        ctx.beginPath();
-        ctx.arc(x, y, 5, 0, 2 * Math.PI);
-        ctx.fill();
-        clickCount = 1;
-      } else if (clickCount === 1) {
-        ctx.fillStyle = "red";
-        document.getElementById("goalInput").value = `${x.toFixed(1)},${y.toFixed(1)}`;
-        ctx.beginPath();
-        ctx.arc(x, y, 5, 0, 2 * Math.PI);
-        ctx.fill();
-        clickCount = 2;
-      }
-    });
-
-    document.getElementById("uploadForm").addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const formData = new FormData(e.target);
-      const res = await fetch("/upload-map", { method: "POST", body: formData });
-      const data = await res.json();
-      alert(data.message);
-      window.location.reload();
-    });
-    async function findExternalPath() {
-    const mapName = document.getElementById("externalMapSelect").value;
-    const s = document.getElementById("extStart").value.split(",");
-    const g = document.getElementById("extEnd").value.split(",");
-
-    const sx = parseFloat(s[0]), sy = parseFloat(s[1]);
-    const gx = parseFloat(g[0]), gy = parseFloat(g[1]);
-
-    const url = `/external-path?map_name=${mapName}&sx=${sx}&sy=${sy}&gx=${gx}&gy=${gy}`;
-
-    document.getElementById("externalHighlighted").src = url;
+/* ---------------- HELPERS ---------------- */
+function isSaveetha() {
+  return mapSelect.value === "Saveetha Engineering College";
 }
 
-  </script>
-  <script>
-async function loadExternalMaps() {
-    const res = await fetch("/");
-    const html = await res.text();
-
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(html, "text/html");
-
-    const select = document.getElementById("externalMapSelect");
-
-    // Get all maps from existing dropdown in the HTML
-    doc.querySelectorAll("#mapSelect option").forEach(opt => {
-        if (opt.value !== "Saveetha Engineering College") {
-            const newOpt = document.createElement("option");
-            newOpt.value = opt.value;
-            newOpt.textContent = opt.textContent;
-            select.appendChild(newOpt);
-        }
-    });
+function resetInputs() {
+  startInput.value = "";
+  goalInput.value = "";
+  startPt = null;
+  goalPt = null;
+  pathOutput.textContent = "";
 }
 
-// Load maps on page start
-loadExternalMaps();
+function drawBaseImage(image) {
+  canvas.width = image.naturalWidth;
+  canvas.height = image.naturalHeight;
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.drawImage(image, 0, 0);
+}
+
+function drawMarkers() {
+  if (startPt) {
+    ctx.beginPath();
+    ctx.fillStyle = "green";
+    ctx.arc(startPt.x, startPt.y, 6, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  if (goalPt) {
+    ctx.beginPath();
+    ctx.fillStyle = "red";
+    ctx.arc(goalPt.x, goalPt.y, 6, 0, Math.PI * 2);
+    ctx.fill();
+  }
+}
+
+function getCanvasCoords(e) {
+  const rect = canvas.getBoundingClientRect();
+  return {
+    x: Math.round((e.clientX - rect.left) * (canvas.width / rect.width)),
+    y: Math.round((e.clientY - rect.top) * (canvas.height / rect.height))
+  };
+}
+
+/* ---------------- MAP CHANGE ---------------- */
+mapSelect.addEventListener("change", () => {
+  resetInputs();
+
+  if (isSaveetha()) {
+    canvas.style.display = "none";
+    startInput.placeholder = "Start Room (e.g. CSE101)";
+    goalInput.placeholder  = "Destination Room (e.g. Library)";
+    status.textContent =
+      "Enter start and destination rooms for Saveetha Engineering College.";
+  } else {
+    canvas.style.display = "block";
+    startInput.placeholder = "Start (x,y)";
+    goalInput.placeholder  = "Goal (x,y)";
+    status.textContent =
+      "Click on the map to select start and goal points.";
+
+    img = new Image();
+    img.onload = () => drawBaseImage(img);
+    img.src = "/map-image/" + encodeURIComponent(mapSelect.value);
+  }
+});
+
+/* ---------------- CANVAS CLICK ---------------- */
+canvas.addEventListener("click", (e) => {
+  const pt = getCanvasCoords(e);
+
+  if (!startPt) {
+    startPt = pt;
+    startInput.value = `${pt.x},${pt.y}`;
+  } else if (!goalPt) {
+    goalPt = pt;
+    goalInput.value = `${pt.x},${pt.y}`;
+  } else {
+    startPt = pt;
+    goalPt = null;
+    startInput.value = `${pt.x},${pt.y}`;
+    goalInput.value = "";
+  }
+
+  drawBaseImage(img);
+  drawMarkers();
+});
+
+/* ---------------- FIND PATH ---------------- */
+findPathBtn.addEventListener("click", async () => {
+
+  /* ---- SAVEETHA ROOM-BASED ---- */
+  if (isSaveetha()) {
+    if (!startInput.value || !goalInput.value) {
+      alert("Please enter both room names.");
+      return;
+    }
+
+    status.textContent = "Finding path...";
+    const url =
+      `/saveetha-path?start_room=${encodeURIComponent(startInput.value)}` +
+      `&end_room=${encodeURIComponent(goalInput.value)}`;
+
+    const resp = await fetch(url);
+    const data = await resp.json();
+
+    if (!resp.ok) {
+      alert(data.detail || "Path not found");
+      status.textContent = "Error finding path.";
+      return;
+    }
+
+    pathOutput.textContent = "Path: " + data.path.join(" → ");
+    status.textContent = "Path found successfully.";
+    return;
+  }
+
+  /* ---- IMAGE-BASED ---- */
+  if (!startPt || !goalPt) {
+    alert("Click on map to set start and goal.");
+    return;
+  }
+
+  status.textContent = "Computing path...";
+  const url =
+    `/indoor-path?map_name=${encodeURIComponent(mapSelect.value)}` +
+    `&sx=${startPt.x}&sy=${startPt.y}` +
+    `&gx=${goalPt.x}&gy=${goalPt.y}`;
+
+  const resp = await fetch(url);
+  const blob = await resp.blob();
+
+  const resultImg = new Image();
+  resultImg.onload = () => {
+    drawBaseImage(resultImg);
+    status.textContent = "Path drawn successfully.";
+  };
+  resultImg.src = URL.createObjectURL(blob);
+});
+
+/* ---------------- UPLOAD ---------------- */
+uploadForm.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const formData = new FormData(uploadForm);
+
+  const res = await fetch("/upload-map", {
+    method: "POST",
+    body: formData
+  });
+
+  const data = await res.json();
+  alert(data.message || "Uploaded");
+  window.location.reload();
+});
+
+/* ---------------- INITIAL STATE ---------------- */
+mapSelect.dispatchEvent(new Event("change"));
 </script>
 
 </body>
