@@ -1,0 +1,256 @@
+/* =========================================================
+   CampusRoute Stylesheet
+   Shared across index.html, contact.html, explore.html
+   ========================================================= */
+
+/* ----------------- Fonts ----------------- */
+@font-face {
+  font-family: 'Pixelinx';
+  /* UPDATED PATH */
+  src: url('/saveetha_files/assets/pixelinx-regular.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+body, .logo, .slogan, input, button, label {
+  font-family: 'Pixelinx', monospace, Arial, sans-serif;
+}
+
+/* Logo, inputs, placeholders, and buttons → monospace only */
+.logo, input, input::placeholder, button {
+  font-family: monospace, Arial, sans-serif !important;
+}
+
+#contactForm input#name::placeholder {
+    font-family: 'Pixelinx' !important;
+}
+
+/* ----------------- Reset ----------------- */
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+/* =========================================================
+   Base Layout
+   ========================================================= */
+body {
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
+  /* Light theme (default) */
+  background-color: white;
+  color: black;
+  background-image: radial-gradient(black 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+
+/* ----------------- Vertical Logo ----------------- */
+.logo {
+  width: 80px;
+  font-size: 48px;
+  letter-spacing: 5px;
+  padding: 40px 30px;
+  color: black;
+  border-right: 2px solid black;
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  user-select: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+body.dark-theme .logo {
+  color: white;
+  border-right: 2px solid white;
+}
+
+/* ----------------- Corner Compass ----------------- */
+.corner-logo {
+  position: fixed;
+  top: 20px;
+  left: 20px;
+  width: 40px;
+  height: 40px;
+  margin-top: 20px;
+  z-index: 1002;
+}
+
+/* UPDATED PATHS */
+.corner-logo.light { content: url("/saveetha_files/assets/compass.svg"); }
+.corner-logo.dark  { content: url("/saveetha_files/assets/compass.svg"); }
+
+/* ----------------- Main Content ----------------- */
+main {
+  flex: 1;
+  padding: 40px 60px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 30px;
+}
+
+/* ----------------- Slogan ----------------- */
+.slogan {
+  font-size: 30px;
+  font-weight: bold;
+  text-align: center;
+  line-height: 1.5;
+  max-width: 730px;
+  margin: 0 auto;
+}
+
+.slogan strong {
+  font-size: 30px;
+  background: rgba(0, 0, 0, 0.814);
+  color: white;
+  padding: 4px 6px;
+  border-radius: 4px;
+}
+
+/* =========================================================
+   Forms
+   ========================================================= */
+form { display: flex; flex-direction: column; gap: 24px; width: 320px; }
+label { font-weight: 700; font-size: 19px; }
+input, textarea {
+  font-family: 'Pixelinx', monospace;
+  font-size: 18px;
+  padding: 8px;
+  border: 2px solid black;
+  border-radius: 8px;
+  outline: none;
+}
+input { font-size: 20px; }
+input::placeholder { font-size: 18px; font-style: italic; color: #636363; }
+textarea { resize: vertical; min-height: 120px; }
+
+/* ----------------- Buttons ----------------- */
+button {
+  font-family: 'Pixelinx', monospace;
+  font-size: 22px;
+  padding: 10px;
+  background-color: white;
+  border: 3px solid black;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+button:hover { background-color: black; color: white; }
+
+/* ----------------- Error Message ----------------- */
+#errorMsg { margin-top: 20px; color: red; font-weight: 700; }
+.hidden { display: none !important; }
+
+/* =========================================================
+   Theme Toggle
+   ========================================================= */
+.theme-toggle {
+  position: fixed;
+  top: 30px;
+  right: 80px;
+  width: 100px;
+  cursor: pointer;
+  z-index: 1000;
+}
+.theme-toggle img { width: 100%; height: auto; display: block; }
+
+/* ----------------- Dark Theme ----------------- */
+body.dark-theme {
+  background-color: black;
+  color: white;
+  background-image: radial-gradient(white 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+body.dark-theme input, body.dark-theme button, body.dark-theme textarea {
+  background: #111;
+  color: white;
+  border: 2px solid white;
+}
+
+/* =========================================================
+   Hamburger & Side Menu
+   ========================================================= */
+.hamburger {
+  position: fixed; top: 24px; right: 32px;
+  font-size: 36px; cursor: pointer; z-index: 3001;
+}
+.side-menu {
+  position: fixed; top: 0; right: 0;
+  width: 220px; height: 100vh;
+  background: white;
+  border-left: 2px solid black;
+  box-shadow: -2px 0 8px rgba(0, 0, 0, 0.1);
+  padding-top: 60px;
+  overflow-y: auto;
+  font-family: 'Pixelinx', monospace, Arial, sans-serif;
+  z-index: 3000;
+  transition: transform 0.3s ease;
+}
+.side-menu ul { list-style: none; margin: 30px 0 0; padding: 0 20px; }
+.side-menu li { margin-bottom: 40px; }
+.side-menu a {
+  display: block; font-size: 22px; color: black;
+  text-decoration: none; padding: 8px 0; user-select: none;
+}
+.side-menu a:hover { background-color: #f0f0f0; }
+.side-menu a.active {
+  font-weight: bold;
+  color: #000000;
+  border-left: 4px solid #000000;
+  padding-left: 12px;
+  background-color: #bdbdbd75;
+}
+
+/* Dark mode side menu */
+body.dark-theme .side-menu { background: #111; color: white; border-left: 2px solid white; }
+body.dark-theme .side-menu a { color: white; }
+body.dark-theme .side-menu a:hover { background-color: #222; }
+body.dark-theme .side-menu a.active {
+  color: #b4b4b4;
+  border-left: 4px solid #bdbdbd;
+  background-color: #37373772;
+}
+
+/* ----------------- Overlay ----------------- */
+.menu-overlay { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.3); z-index: 2500; }
+
+/* =========================================================
+   Contact Note
+   ========================================================= */
+.contact-note {
+  position: fixed; bottom: 20px; left: 53%;
+  transform: translateX(-50%);
+  font-size: 14px; text-align: center; user-select: none;
+}
+.contact-note a { color: black; text-decoration: underline; font-weight: bold; cursor: pointer; }
+body.dark-theme .contact-note a { color: white; }
+
+/* =========================================================
+   Contact Form Card
+   ========================================================= */
+.form-card {
+  background: white;
+  border: 3px solid black;
+  border-radius: 16px;
+  box-shadow: 6px 6px 0 black;
+  padding: 30px 25px;
+  width: 400px;
+  max-width: 90vw;
+  display: flex;
+  justify-content: center;
+}
+body.dark-theme .form-card {
+  background: #111;
+  border: 3px solid white;
+  box-shadow: 6px 6px 0 white;
+}
+
+/* =========================================================
+   Responsive
+   ========================================================= */
+@media (max-width: 500px) {
+  .side-menu { width: 80vw; padding-top: 50px; font-size: 20px; }
+  .hamburger { top: 18px; right: 20px; font-size: 32px; }
+  .side-menu li { margin-bottom: 30px; }
+  main { padding: 20px 15px; }
+  .logo { width: 50px; font-size: 36px; padding: 20px 15px; }
+}

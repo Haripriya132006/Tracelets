@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Contact Us - CampusRoute</title>
+  <link rel="stylesheet" href="/saveetha_files/style.css" />
+</head>
+
+<body>
+  <img src="/saveetha_files/assets/compass.svg" alt="Compass Logo" class="corner-logo" />
+  <aside class="logo">CampusRoute</aside>
+
+  <main>
+  <h1 class="slogan">Submit your issue</h1>
+
+  <div class="form-card">
+    <form id="contactForm">
+      <label for="name">Your Name</label>
+      <input type="text" id="name" name="name" required placeholder="e.g., Karen" />
+
+      <label for="message">Message</label>
+      <textarea id="message" name="message" required placeholder="Type your issue here..."></textarea>
+
+      <button type="submit">Send Message →</button>
+      <button type="button" onclick="window.location.href='/campus-route'">< Back</button>
+    </form>
+  </div>
+</main>
+
+<div id="themeToggle" class="theme-toggle">
+    <img id="themeIcon" src="/saveetha_files/assets/sun-removebg-preview.png" alt="Dark mode toggle" />
+  </div>
+
+  <div id="hamburger" class="hamburger">&#9776;</div>
+  <div id="sideMenu" class="side-menu hidden">
+    <ul>
+      <li><a href="/saveetha_files/explore.html">Explore Floors</a></li>
+      <li><a href="/saveetha_files/rooms.html">List of Rooms</a></li>
+      <li><a href="/campus-route">Home</a></li>
+    </ul>
+  </div>
+
+  <script src="/saveetha_files/app.js"></script>
+</body>
+</html>

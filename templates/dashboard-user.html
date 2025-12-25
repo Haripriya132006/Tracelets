@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Tracelets</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #0033cc; /* Tracelets Blue */
+            --bg-body: #f4f7f9; /* Light Professional Gray */
+            --bg-card: #ffffff;
+            --text-dark: #1a1a1a;
+            --text-gray: #666666;
+            --shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-body);
+            color: var(--text-dark);
+            margin: 0;
+            padding: 0;
+        }
+
+        /* --- HEADER --- */
+        .navbar {
+            background-color: white;
+            padding: 15px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #e0e0e0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary);
+            letter-spacing: -0.5px;
+        }
+
+        .user-profile {
+            font-size: 0.9rem;
+            color: var(--text-gray);
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .logout-link {
+            color: #d32f2f;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.85rem;
+        }
+
+        /* --- CONTAINER --- */
+        .container {
+            max-width: 1200px;
+            margin: 40px auto;
+            padding: 0 20px;
+        }
+
+        h2 {
+            font-weight: 600;
+            margin-bottom: 10px;
+            font-size: 1.4rem;
+        }
+
+        .section-desc {
+            color: var(--text-gray);
+            margin-bottom: 30px;
+            font-size: 0.95rem;
+        }
+
+        /* --- GRID SYSTEM --- */
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 25px;
+            margin-bottom: 60px;
+        }
+
+        /* --- CARDS --- */
+        .card {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: var(--shadow);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            border: 1px solid transparent;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            height: 180px;
+        }
+
+        .card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+            border-color: #e0e0e0;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        .card-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin: 0 0 8px 0;
+            color: #2c3e50;
+        }
+
+        .card-text {
+            font-size: 0.9rem;
+            color: var(--text-gray);
+            line-height: 1.5;
+        }
+
+        /* --- BADGES --- */
+        .badge {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        .badge-active { background: #e3f2fd; color: #1976d2; }
+        .badge-inactive { background: #f5f5f5; color: #9e9e9e; }
+
+        /* --- BUTTONS --- */
+        .btn {
+            display: block;
+            width: 100%;
+            padding: 12px 0;
+            border-radius: 6px;
+            text-align: center;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.9rem;
+            border: none;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .btn-primary {
+            background-color: var(--primary);
+            color: white;
+        }
+        .btn-primary:hover { background-color: #002288; }
+
+        .btn-outline {
+            background-color: transparent;
+            border: 1px solid var(--primary);
+            color: var(--primary);
+        }
+        .btn-outline:hover { background-color: #f0f4ff; }
+
+        .btn-disabled {
+            background-color: #e0e0e0;
+            color: #999;
+            cursor: not-allowed;
+        }
+
+        /* --- EMPTY STATE --- */
+        .empty-state {
+            background: white;
+            border-radius: 12px;
+            padding: 40px;
+            text-align: center;
+            border: 2px dashed #e0e0e0;
+        }
+        .empty-text {
+            color: var(--text-gray);
+            margin-bottom: 20px;
+        }
+
+    </style>
+</head>
+<body>
+
+    <nav class="navbar">
+        <div class="logo">Tracelets</div>
+        <div class="user-profile">
+            <span>Welcome, {{ user.username }}</span>
+            <a href="/" class="logout-link">Logout</a>
+        </div>
+    </nav>
+
+    <div class="container">
+        
+        <h2>My Layouts</h2>
+        <p class="section-desc">Navigate through your subscribed spaces.</p>
+
+        {% if user_subs %}
+            <div class="grid">
+                {% for map in all_maps %}
+                    {% if map.id in user_subs %}
+                    <div class="card">
+                        <div>
+                            <div class="card-header">
+                                <h3 class="card-title">{{ map.name }}</h3>
+                                <span class="badge badge-active">Active</span>
+                            </div>
+                            <p class="card-text">{{ map.desc }}</p>
+                        </div>
+                        <a href="/campus-route?map={{ map.id }}&email={{ user.email }}" class="btn btn-primary">Open Navigation →</a>
+                    </div>
+                    {% endif %}
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="empty-state">
+                <p class="empty-text">You haven't subscribed to any layouts yet.</p>
+                <a href="#explore-section" class="btn btn-outline" style="width: 200px; margin: 0 auto;">Subscribe a Layout</a>
+            </div>
+        {% endif %}
+
+
+        <h2 id="explore-section" style="margin-top: 60px;">Explore Spaces</h2>
+        <p class="section-desc">Find new campuses and complexes to navigate.</p>
+
+        <div class="grid">
+            {% for map in all_maps %}
+                {% if map.id not in user_subs %}
+                <div class="card">
+                    <div>
+                        <div class="card-header">
+                            <h3 class="card-title">{{ map.name }}</h3>
+                            {% if map.active %}
+                                <span class="badge badge-active">Available</span>
+                            {% else %}
+                                <span class="badge badge-inactive">Coming Soon</span>
+                            {% endif %}
+                        </div>
+                        <p class="card-text">{{ map.desc }}</p>
+                    </div>
+
+                    {% if map.active %}
+                        <form action="/subscribe" method="post">
+                            <input type="hidden" name="email" value="{{ user.email }}">
+                            <input type="hidden" name="map_id" value="{{ map.id }}">
+                            <button type="submit" class="btn btn-outline">Subscribe +</button>
+                        </form>
+                    {% else %}
+                        <button class="btn btn-disabled" disabled>Unavailable</button>
+                    {% endif %}
+                </div>
+                {% endif %}
+            {% endfor %}
+        </div>
+
+    </div>
+
+</body>
+</html>

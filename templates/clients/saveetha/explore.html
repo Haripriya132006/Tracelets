@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Explore Floors - CampusRoute</title>
+
+  <link rel="stylesheet" href="/saveetha_files/style.css" />
+
+  <link rel="stylesheet" href="/saveetha_files/explore.css" />
+</head>
+<body>
+
+  <img src="/saveetha_files/assets/compass.svg" alt="Compass Logo" class="corner-logo" />
+
+  <aside class="logo" onclick="window.location.href='/campus-route'">CampusRoute</aside>
+
+  <main>
+    <div id="hamburger" class="hamburger">&#9776;</div>
+    <div id="sideMenu" class="side-menu hidden">
+      <ul>
+        <li><a href="/saveetha_files/explore.html" class="active">Explore Floors</a></li>
+        <li><a href="/saveetha_files/rooms.html">List of Rooms</a></li>
+        <li><a href="/campus-route">Home</a></li>
+      </ul>
+    </div>
+
+    <div class="explore-title">Explore Floors</div>
+    <div class="subtitle">Select a floor to view its map and details</div>
+
+    <div class="floors-grid">
+      <div class="floor-card">
+        <div class="floor-name">Ground Floor</div>
+        <img src="/saveetha_files/assets/floor0-map.jpg" alt="Ground Floor Map" />
+      </div>
+      <div class="floor-card">
+        <div class="floor-name">1st Floor</div>
+        <img src="/saveetha_files/assets/floor1-map.jpg" alt="Floor 1 Map" />
+      </div>
+      <div class="floor-card">
+        <div class="floor-name">2nd Floor</div>
+        <img src="/saveetha_files/assets/floor2-map.jpg" alt="Floor 2 Map" />
+      </div>
+      <div class="floor-card">
+        <div class="floor-name">3rd Floor</div>
+        <img src="/saveetha_files/assets/floor3-map.jpg" alt="Floor 3 Map" />
+      </div>
+      <div class="floor-card">
+        <div class="floor-name">4th Floor</div>
+        <img src="/saveetha_files/assets/floor4-map.jpg" alt="Floor 4 Map" />
+      </div>
+      <div class="floor-card">
+        <div class="floor-name">5th Floor</div>
+        <img src="/saveetha_files/assets/floor5-map.jpg" alt="Floor 5 Map" />
+      </div>
+      <div class="floor-card">
+        <div class="floor-name">6th Floor</div>
+        <img src="/saveetha_files/assets/floor6-map.jpg" alt="Floor 6 Map" />
+      </div>
+    </div>
+  </main>
+
+  <div id="themeToggle" class="theme-toggle">
+    <img id="themeIcon" src="/saveetha_files/assets/sun-removebg-preview.png" alt="Dark mode toggle" />
+  </div>
+
+  <div class="modal" id="imageModal">
+    <div class="zoom-controls">
+      <button id="zoomIn" aria-label="Zoom in">+</button>
+      <button id="zoomOut" aria-label="Zoom out">−</button>
+    </div>
+    <span class="close-btn" id="closeModal" aria-label="Close viewer">&times;</span>
+    <img id="modalImg" src="" alt="Expanded Floor Plan" />
+  </div>
+
+  <script src="/saveetha_files/app.js"></script>
+
+  <script src="/saveetha_files/explore.js"></script>
+</body>
+</html>

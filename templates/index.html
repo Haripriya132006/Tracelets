@@ -1,270 +1,152 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <title>Tracelet – Indoor Navigation</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tracelets - Pin. Trace. Navigate.</title>
+    <style>
+        /* --- CSS STYLES --- */
+        /* Architectural Scale Border — Refined */
+.scale-border {
+    position: fixed;
+    top: 0.4in;
+    left: 0.4in;
+    right: 0.4in;
+    bottom: 0.4in;
+    pointer-events: none;
+    z-index: 10;
 
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      margin: 20px;
-    }
+    /* Clean border frame */
+    border: 2px solid rgba(255, 255, 255, 0.9);
 
-    h2, h3 {
-      margin-bottom: 8px;
-    }
+    /* Scale ticks ONLY on top and left */
+    background:
+        /* Top scale */
+        repeating-linear-gradient(
+            to right,
+            rgba(255,255,255,0.85) 0,
+            rgba(255,255,255,0.85) 2px,
+            transparent 2px,
+            transparent 18px
+        ),
+        /* Left scale */
+        repeating-linear-gradient(
+            to bottom,
+            rgba(255,255,255,0.85) 0,
+            rgba(255,255,255,0.85) 2px,
+            transparent 2px,
+            transparent 18px
+        );
 
-    .controls {
-      margin-bottom: 12px;
-    }
+    background-position:
+        top left,
+        top left;
 
-    input, select, button {
-      padding: 8px;
-      margin: 6px 6px 6px 0;
-      font-size: 14px;
-    }
+    background-size:
+        100% 10px,   /* top ruler height */
+        10px 100%;   /* left ruler width */
 
-    button {
-      background: #0b66c3;
-      color: white;
-      border: none;
-      border-radius: 3px;
-      cursor: pointer;
-    }
+    background-repeat: no-repeat;
+}
 
-    #mapCanvas {
-      border: 2px solid #333;
-      display: none;
-      max-width: 95%;
-      margin-top: 12px;
-    }
 
-    #status {
-      margin-top: 8px;
-      color: #444;
-    }
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden; /* Prevents scrollbars */
+            font-family: 'Courier New', Courier, monospace; /* Tech/Drafting font */
+        }
 
-    #pathOutput {
-      margin-top: 10px;
-      font-weight: bold;
-      color: #222;
-    }
-  </style>
+        /* The Blueprint Background Effect */
+        .blueprint-bg {
+            background-color: #0033cc; /* Strong Engineering Blue */
+            background-image: 
+                linear-gradient(rgba(255, 255, 255, 0.2) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.2) 1px, transparent 1px);
+            background-size: 40px 40px; /* Size of the grid squares */
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 4rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 0px #001a66;
+        }
+
+        h3 {
+            font-size: 1.5rem;
+            margin-bottom: 60px;
+            opacity: 0.9;
+            font-weight: normal;
+        }
+
+        /* The Button Container */
+        .button-group {
+            display: flex;
+            gap: 30px; /* Space between buttons */
+        }
+
+        /* The "Blueprint" Buttons */
+        .blueprint-btn {
+            background: transparent;
+            border: 2px solid white;
+            color: white;
+            padding: 15px 40px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            font-family: 'Courier New', Courier, monospace;
+        }
+
+        .blueprint-btn:hover {
+            background: white;
+            color: #0033cc;
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.8);
+            transform: translateY(-2px);
+        }
+
+        /* Footer */
+        .footer {
+            position: absolute;
+            bottom: 20px;
+            font-size: 0.8rem;
+            opacity: 0.7;
+        }
+    </style>
 </head>
-
 <body>
 
-<h2>Tracelet – Indoor Navigation</h2>
+    <div class="scale-border"></div>
 
-<div class="controls">
-  <label><b>Select Map:</b></label>
-  <select id="mapSelect">
-    <option value="Saveetha Engineering College">
-      Saveetha Engineering College
-    </option>
-    {% for m in uploaded_maps %}
-      <option value="{{ m.map_name }}">{{ m.map_name }}</option>
-    {% endfor %}
-  </select>
+    <div class="blueprint-bg">
+        <h1>Tracelets</h1>
+        <h3>Tracing from Maps & Blueprints.<br>Pin. Trace. Navigate.</h3>
 
-  <br>
+        <div class="button-group">
+            <a href="/login-user" class="blueprint-btn">
+                ➔ Login as User
+            </a>
 
-  <input type="text" id="startInput" placeholder="Start Room">
-  <input type="text" id="goalInput" placeholder="Destination Room">
-  <button id="findPathBtn">Find Path</button>
+            <a href="/login-admin" class="blueprint-btn">
+                ➔ Login as Admin
+            </a>
+        </div>
 
-  <div id="status">
-    Enter start and destination rooms for Saveetha Engineering College.
-  </div>
-
-  <div id="pathOutput"></div>
-</div>
-
-<canvas id="mapCanvas"></canvas>
-
-<hr>
-
-<h3>Upload Indoor Map (Image-based)</h3>
-<form id="uploadForm" enctype="multipart/form-data">
-  <input type="text" name="map_name" placeholder="Map name (optional)">
-  <input type="file" name="file" accept=".jpg,.jpeg,.png,.webp" required>
-  <button type="submit">Upload</button>
-</form>
-
-<script>
-/* ---------------- ELEMENTS ---------------- */
-const mapSelect   = document.getElementById("mapSelect");
-const startInput  = document.getElementById("startInput");
-const goalInput   = document.getElementById("goalInput");
-const findPathBtn = document.getElementById("findPathBtn");
-const canvas      = document.getElementById("mapCanvas");
-const ctx         = canvas.getContext("2d");
-const status      = document.getElementById("status");
-const pathOutput  = document.getElementById("pathOutput");
-const uploadForm  = document.getElementById("uploadForm");
-
-/* ---------------- STATE ---------------- */
-let img = new Image();
-let startPt = null;
-let goalPt = null;
-
-/* ---------------- HELPERS ---------------- */
-function isSaveetha() {
-  return mapSelect.value === "Saveetha Engineering College";
-}
-
-function resetInputs() {
-  startInput.value = "";
-  goalInput.value = "";
-  startPt = null;
-  goalPt = null;
-  pathOutput.textContent = "";
-}
-
-function drawBaseImage(image) {
-  canvas.width = image.naturalWidth;
-  canvas.height = image.naturalHeight;
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  ctx.drawImage(image, 0, 0);
-}
-
-function drawMarkers() {
-  if (startPt) {
-    ctx.beginPath();
-    ctx.fillStyle = "green";
-    ctx.arc(startPt.x, startPt.y, 6, 0, Math.PI * 2);
-    ctx.fill();
-  }
-  if (goalPt) {
-    ctx.beginPath();
-    ctx.fillStyle = "red";
-    ctx.arc(goalPt.x, goalPt.y, 6, 0, Math.PI * 2);
-    ctx.fill();
-  }
-}
-
-function getCanvasCoords(e) {
-  const rect = canvas.getBoundingClientRect();
-  return {
-    x: Math.round((e.clientX - rect.left) * (canvas.width / rect.width)),
-    y: Math.round((e.clientY - rect.top) * (canvas.height / rect.height))
-  };
-}
-
-/* ---------------- MAP CHANGE ---------------- */
-mapSelect.addEventListener("change", () => {
-  resetInputs();
-
-  if (isSaveetha()) {
-    canvas.style.display = "none";
-    startInput.placeholder = "Start Room (e.g. CSE101)";
-    goalInput.placeholder  = "Destination Room (e.g. Library)";
-    status.textContent =
-      "Enter start and destination rooms for Saveetha Engineering College.";
-  } else {
-    canvas.style.display = "block";
-    startInput.placeholder = "Start (x,y)";
-    goalInput.placeholder  = "Goal (x,y)";
-    status.textContent =
-      "Click on the map to select start and goal points.";
-
-    img = new Image();
-    img.onload = () => drawBaseImage(img);
-    img.src = "/map-image/" + encodeURIComponent(mapSelect.value);
-  }
-});
-
-/* ---------------- CANVAS CLICK ---------------- */
-canvas.addEventListener("click", (e) => {
-  const pt = getCanvasCoords(e);
-
-  if (!startPt) {
-    startPt = pt;
-    startInput.value = `${pt.x},${pt.y}`;
-  } else if (!goalPt) {
-    goalPt = pt;
-    goalInput.value = `${pt.x},${pt.y}`;
-  } else {
-    startPt = pt;
-    goalPt = null;
-    startInput.value = `${pt.x},${pt.y}`;
-    goalInput.value = "";
-  }
-
-  drawBaseImage(img);
-  drawMarkers();
-});
-
-/* ---------------- FIND PATH ---------------- */
-findPathBtn.addEventListener("click", async () => {
-
-  /* ---- SAVEETHA ROOM-BASED ---- */
-  if (isSaveetha()) {
-    if (!startInput.value || !goalInput.value) {
-      alert("Please enter both room names.");
-      return;
-    }
-
-    status.textContent = "Finding path...";
-    const url =
-      `/saveetha-path?start_room=${encodeURIComponent(startInput.value)}` +
-      `&end_room=${encodeURIComponent(goalInput.value)}`;
-
-    const resp = await fetch(url);
-    const data = await resp.json();
-
-    if (!resp.ok) {
-      alert(data.detail || "Path not found");
-      status.textContent = "Error finding path.";
-      return;
-    }
-
-    pathOutput.textContent = "Path: " + data.path.join(" → ");
-    status.textContent = "Path found successfully.";
-    return;
-  }
-
-  /* ---- IMAGE-BASED ---- */
-  if (!startPt || !goalPt) {
-    alert("Click on map to set start and goal.");
-    return;
-  }
-
-  status.textContent = "Computing path...";
-  const url =
-    `/indoor-path?map_name=${encodeURIComponent(mapSelect.value)}` +
-    `&sx=${startPt.x}&sy=${startPt.y}` +
-    `&gx=${goalPt.x}&gy=${goalPt.y}`;
-
-  const resp = await fetch(url);
-  const blob = await resp.blob();
-
-  const resultImg = new Image();
-  resultImg.onload = () => {
-    drawBaseImage(resultImg);
-    status.textContent = "Path drawn successfully.";
-  };
-  resultImg.src = URL.createObjectURL(blob);
-});
-
-/* ---------------- UPLOAD ---------------- */
-uploadForm.addEventListener("submit", async (e) => {
-  e.preventDefault();
-  const formData = new FormData(uploadForm);
-
-  const res = await fetch("/upload-map", {
-    method: "POST",
-    body: formData
-  });
-
-  const data = await res.json();
-  alert(data.message || "Uploaded");
-  window.location.reload();
-});
-
-/* ---------------- INITIAL STATE ---------------- */
-mapSelect.dispatchEvent(new Event("change"));
-</script>
+        <div class="footer">
+            Saveetha Engineering College • Mini Project
+        </div>
+    </div>
 
 </body>
 </html>
