@@ -80,8 +80,9 @@ async def login(email: str = Form(...), password: str = Form(...)):
         return JSONResponse({"error": "Invalid email or password"}, status_code=401)
     
     return RedirectResponse(url=f"/dashboard-user?email={email}", status_code=303)
-
-# --- ADMIN AUTH ROUTES ---
+# ==========================================
+#           ADMIN AUTH & DASHBOARD
+# ==========================================
 
 @app.get("/signup-admin", response_class=HTMLResponse)
 def signup_admin_page(request: Request):
@@ -91,34 +92,59 @@ def signup_admin_page(request: Request):
 def login_admin_page(request: Request):
     return templates.TemplateResponse("login-admin.html", {"request": request})
 
-# Dummy Admin Registration (For MVP Demo)
+# 1. REGISTER ADMIN
 @app.post("/register-admin")
-async def register_admin(email: str = Form(...), org_name: str = Form(...)):
-    # In a real app, save to DB. For MVP, just print and redirect.
-    print(f"New Admin Registered: {email} for {org_name}")
+async def register_admin(
+    admin_name: str = Form(...),
+    email: str = Form(...), 
+    password: str = Form(...),
+    org_name: str = Form(...)
+):
+    # Check if exists
+    if users_collection.find_one({"email": email}):
+         return JSONResponse({"error": "Admin Email already registered"}, status_code=400)
+
+    # Save Admin Data
+    admin_data = {
+        "username": admin_name,
+        "email": email,
+        "password": password,
+        "role": "admin",
+        "org_name": org_name,
+        "created_at": datetime.utcnow()
+    }
+    users_collection.insert_one(admin_data)
+    
     return RedirectResponse(url=f"/dashboard-admin?email={email}", status_code=303)
 
-# Dummy Admin Login (For MVP Demo)
+# 2. LOGIN ADMIN
 @app.post("/auth-admin")
-async def auth_admin(email: str = Form(...)):
-    # In a real app, check password. For MVP, just redirect.
+async def auth_admin(email: str = Form(...), password: str = Form(...)):
+    user = users_collection.find_one({"email": email})
+    
+    # Simple check (In real app, check role="admin" too)
+    if not user or user["password"] != password:
+        return JSONResponse({"error": "Invalid admin credentials"}, status_code=401)
+        
     return RedirectResponse(url=f"/dashboard-admin?email={email}", status_code=303)
 
-# Admin Dashboard Placeholder
+# 3. ADMIN DASHBOARD
 @app.get("/dashboard-admin", response_class=HTMLResponse)
 def admin_dashboard(request: Request, email: str):
-    # You can reuse the user dashboard for now or make a new simple one
-    return HTMLResponse(f"""
-    <html>
-        <body style='font-family:sans-serif; text-align:center; padding:50px;'>
-            <h1 style='color:#0033cc'>Admin Dashboard</h1>
-            <p>Welcome, Facility Manager ({email})</p>
-            <p>This section is under construction for Phase 2.</p>
-            <a href='/'>Logout</a>
-        </body>
-    </html>
-    """)
+    # Fetch Admin Details
+    admin = users_collection.find_one({"email": email})
+    if not admin:
+        return RedirectResponse(url="/login-admin")
 
+    # Fetch Maps Owned by this Admin
+    my_maps = list(maps_collection.find({"owner": email}, {"_id": 0, "map_name": 1}))
+
+    return templates.TemplateResponse("dashboard-admin.html", {
+        "request": request,
+        "admin_email": email,
+        "org_name": admin.get("org_name", "Facility"),
+        "maps": my_maps
+    })
 # ==========================================
 #           DASHBOARD & SUBSCRIPTIONS
 # ==========================================
@@ -214,7 +240,8 @@ def image_nav_page(request: Request, map_name: str, email: str = ""):
 # ==========================================
 
 @app.post("/upload-map")
-async def upload_map(file: UploadFile = File(...), map_name: str = Form(None), owner_email: str = Form(None)):
+async def upload_map(file: UploadFile = File(...), map_name: str = Form(None), owner_email: str = Form(None),role: str = Form("user")):
+
     ext = file.filename.split(".")[-1].lower()
     if ext not in ALLOWED_EXTENSIONS:
         return JSONResponse({"error": "Invalid file type"}, status_code=400)
@@ -231,11 +258,16 @@ async def upload_map(file: UploadFile = File(...), map_name: str = Form(None), o
     }
     maps_collection.insert_one(doc)
     
-    if owner_email:
+    # --- REDIRECT LOGIC FIXED ---
+    if role == "admin":
+        # If Admin uploaded it, go back to Admin Dash
+        return RedirectResponse(url=f"/dashboard-admin?email={owner_email}", status_code=303)
+    elif owner_email:
+        # If User uploaded it, go back to User Dash
         return RedirectResponse(url=f"/dashboard-user?email={owner_email}", status_code=303)
     else:
+        # If Guest (Landing Page), go to Tool
         return RedirectResponse(url=f"/image-nav?map_name={unique_name}", status_code=303)
-
 
 @app.get("/map-image/{map_name}")
 def get_map_image(map_name: str):
