@@ -220,6 +220,35 @@
                 <a href="#explore-section" class="btn btn-outline" style="width: 200px; margin: 0 auto;">Subscribe a Layout</a>
             </div>
         {% endif %}
+        <h2 style="margin-top: 60px;">My Custom Maps</h2>
+        <p class="section-desc">Upload your own floor plans (Image based).</p>
+
+        <div class="card" style="height: auto; margin-bottom: 20px;">
+            <form action="/upload-map" method="post" enctype="multipart/form-data" style="display:flex; gap:10px; align-items:center;">
+                <input type="hidden" name="owner_email" value="{{ user.email }}">
+                <input type="text" name="map_name" placeholder="Map Name (e.g. My Bedroom)" required style="padding:10px; border:1px solid #ccc; border-radius:4px;">
+                <input type="file" name="file" required style="padding:10px;">
+                <button type="submit" class="btn btn-outline" style="width:auto; padding: 10px 20px;">Upload New Map</button>
+            </form>
+        </div>
+
+        <div class="grid">
+            {% if custom_maps %}
+                {% for cmap in custom_maps %}
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">{{ cmap.map_name }}</h3>
+                        <span class="badge badge-active">Custom</span>
+                    </div>
+                    <p class="card-text">Uploaded: {{ cmap.uploaded_at.strftime('%Y-%m-%d') }}</p>
+                    
+                    <a href="/image-nav?map_name={{ cmap.map_name }}&email={{ user.email }}" class="btn btn-primary">Open Tool →</a>
+                </div>
+                {% endfor %}
+            {% else %}
+                <p style="color:#666;">No custom maps uploaded yet.</p>
+            {% endif %}
+        </div>
 
 
         <h2 id="explore-section" style="margin-top: 60px;">Explore Spaces</h2>

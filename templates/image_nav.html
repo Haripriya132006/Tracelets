@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Tracelets - Navigation Tool</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    
+    <style>
+        /* --- Human-Friendly Tech Theme --- */
+        :root {
+            --bg-body: #f4f6f8;       /* Soft Drafting Gray */
+            --bg-paper: #ffffff;      /* Clean White */
+            --primary: #0033cc;       /* Tracelets Blue */
+            --primary-hover: #002299;
+            --text-main: #2c3e50;
+            --text-sub: #5f6c7b;
+            --border: #e1e4e8;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+
+        body {
+            margin: 0;
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            font-family: 'Inter', sans-serif; /* Clean, human font */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        /* --- Header & Toolbar --- */
+        .header {
+            margin-top: 30px;
+            text-align: center;
+        }
+
+        h2 {
+            font-weight: 600;
+            margin: 0 0 5px 0;
+            color: var(--text-main);
+        }
+
+        .subtitle {
+            font-size: 0.9rem;
+            color: var(--text-sub);
+            margin-bottom: 20px;
+        }
+
+        .controls {
+            background: var(--bg-paper);
+            padding: 10px 20px;
+            border-radius: 50px; /* Pill shape for modern feel */
+            box-shadow: var(--shadow);
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            border: 1px solid var(--border);
+            margin-bottom: 20px;
+        }
+
+        #status {
+            font-size: 0.95rem;
+            font-weight: 500;
+            color: var(--primary);
+        }
+
+        button {
+            padding: 8px 16px;
+            cursor: pointer;
+            background: var(--bg-body);
+            color: var(--text-main);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            transition: all 0.2s ease;
+        }
+
+        button:hover {
+            background: #eef2f5;
+            border-color: #d1d5db;
+        }
+
+        /* --- The Map "Paper" --- */
+        .canvas-container {
+            padding: 10px;
+            background: var(--bg-paper);
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow);
+            border-radius: 4px;
+            line-height: 0; /* Prevents tiny gap under canvas */
+        }
+
+        #mapCanvas {
+            cursor: crosshair;
+            max-width: 90vw;
+            max-height: 70vh;
+            background-image: 
+                radial-gradient(#e1e4e8 1px, transparent 1px);
+            background-size: 20px 20px; /* Subtle grid pattern behind map */
+        }
+
+        /* --- Footer Link --- */
+        .back-link {
+            margin-top: 30px;
+            margin-bottom: 40px;
+            color: var(--text-sub);
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 500;
+            padding-bottom: 2px;
+            border-bottom: 1px dashed transparent;
+            transition: all 0.2s;
+        }
+
+        .back-link:hover {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h2>Navigation Tool</h2>
+        <div class="subtitle">Click on the map to set your path</div>
+    </div>
+    
+    <div class="controls">
+        <span id="status">📍 Step 1: Click Start Point (Green)</span>
+        <button id="resetBtn">Reset</button>
+    </div>
+
+    <div class="canvas-container">
+        <canvas id="mapCanvas"></canvas>
+    </div>
+
+    {% if email %}
+        <a href="/dashboard-user?email={{ email }}" class="back-link">← Back to Dashboard</a>
+    {% else %}
+        <a href="/" class="back-link">← Back to Home</a>
+    {% endif %}
+
+    <script>
+        const mapName = "{{ map_name }}"; 
+        const canvas = document.getElementById("mapCanvas");
+        const ctx = canvas.getContext("2d");
+        const status = document.getElementById("status");
+        
+        let img = new Image();
+        let startPt = null;
+        let goalPt = null;
+
+        // Load the image
+        img.src = "/map-image/" + encodeURIComponent(mapName);
+        img.onload = () => {
+            canvas.width = img.naturalWidth;
+            canvas.height = img.naturalHeight;
+            drawBase();
+        };
+
+        function drawBase() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.drawImage(img, 0, 0);
+            drawMarkers();
+        }
+
+        function drawMarkers() {
+            if (startPt) {
+                ctx.fillStyle = "#27ae60"; // Professional Green
+                ctx.strokeStyle = "white";
+                ctx.lineWidth = 2;
+                ctx.beginPath(); ctx.arc(startPt.x, startPt.y, 8, 0, Math.PI*2); 
+                ctx.fill(); ctx.stroke();
+            }
+            if (goalPt) {
+                ctx.fillStyle = "#c0392b"; // Professional Red
+                ctx.strokeStyle = "white";
+                ctx.lineWidth = 2;
+                ctx.beginPath(); ctx.arc(goalPt.x, goalPt.y, 8, 0, Math.PI*2); 
+                ctx.fill(); ctx.stroke();
+            }
+        }
+
+        canvas.addEventListener("click", async (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+
+            const x = (e.clientX - rect.left) * scaleX;
+            const y = (e.clientY - rect.top) * scaleY;
+
+            if (!startPt) {
+                startPt = {x, y};
+                status.textContent = "📍 Step 2: Click Destination (Red)";
+                drawBase();
+            } else if (!goalPt) {
+                goalPt = {x, y};
+                status.textContent = "🔄 Computing best route...";
+                drawBase();
+                
+                // --- CALL THE A* API ---
+                const url = `/indoor-path?map_name=${encodeURIComponent(mapName)}&sx=${startPt.x}&sy=${startPt.y}&gx=${goalPt.x}&gy=${goalPt.y}`;
+                
+                try {
+                    const resp = await fetch(url);
+                    if(!resp.ok) throw new Error("Pathfind failed");
+                    
+                    const blob = await resp.blob();
+                    const pathImg = new Image();
+                    pathImg.onload = () => {
+                        ctx.drawImage(pathImg, 0, 0);
+                        status.textContent = "✅ Route calculated!";
+                    };
+                    pathImg.src = URL.createObjectURL(blob);
+                } catch (err) {
+                    status.textContent = "❌ Error: " + err.message;
+                }
+            }
+        });
+
+        document.getElementById("resetBtn").onclick = () => {
+            startPt = null; goalPt = null;
+            drawBase();
+            status.textContent = "📍 Step 1: Click Start Point (Green)";
+        };
+    </script>
+</body>
+</html>

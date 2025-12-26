@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Facility Registration - Tracelets</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        /* --- BACKGROUND: THE BLUEPRINT --- */
+        body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            min-height: 100vh;
+            font-family: 'Inter', sans-serif;
+            background-color: #0033cc;
+            background-image: 
+                linear-gradient(rgba(255, 255, 255, 0.2) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.2) 1px, transparent 1px);
+            background-size: 40px 40px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* --- THE "PAPER" DOCUMENT CONTAINER --- */
+        .document-container {
+            background: #ffffff;
+            width: 90%;
+            max-width: 900px; /* Big and wide */
+            margin: 40px 0;
+            padding: 50px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+            border-radius: 4px;
+            position: relative;
+        }
+
+        /* Subtle "Official Document" Header */
+        .doc-header {
+            border-bottom: 2px solid #0033cc;
+            margin-bottom: 30px;
+            padding-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: end;
+        }
+
+        h1 {
+            margin: 0;
+            font-size: 1.8rem;
+            color: #0033cc;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .doc-id {
+            font-family: 'Courier New', monospace;
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        /* --- FORM LAYOUT --- */
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr; /* Two columns */
+            gap: 30px;
+        }
+
+        .section-title {
+            grid-column: 1 / -1; /* Span full width */
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: #999;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-top: 10px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 5px;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        label {
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: #333;
+            margin-bottom: 8px;
+        }
+
+        input, select {
+            padding: 12px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 1rem;
+            font-family: 'Inter', sans-serif;
+            background: #fdfdfd;
+            transition: border 0.2s;
+        }
+
+        input:focus, select:focus {
+            border-color: #0033cc;
+            outline: none;
+            background: #fff;
+        }
+
+        /* --- BUTTONS --- */
+        .btn-submit {
+            grid-column: 1 / -1;
+            background: #0033cc;
+            color: white;
+            padding: 15px;
+            font-size: 1rem;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+            margin-top: 20px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: background 0.3s;
+        }
+
+        .btn-submit:hover {
+            background: #002288;
+        }
+
+        .login-link {
+            grid-column: 1 / -1;
+            text-align: center;
+            margin-top: 10px;
+            font-size: 0.9rem;
+            color: #666;
+        }
+        .login-link a {
+            color: #0033cc;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="document-container">
+        <div class="doc-header">
+            <h1>Organization Registration</h1>
+            <span class="doc-id">FORM: ADMIN-REG-V1</span>
+        </div>
+
+        <form action="/register-admin" method="post" class="form-grid">
+            
+            <div class="section-title">01 // The Administrator</div>
+
+            <div class="input-group">
+                <label>Full Name</label>
+                <input type="text" name="admin_name" placeholder="e.g. Dr. S. Rajesh" required>
+            </div>
+
+            <div class="input-group">
+                <label>Job Title / Designation</label>
+                <input type="text" name="job_title" placeholder="e.g. Facility Manager" required>
+            </div>
+
+            <div class="input-group">
+                <label>Employee ID / Badge No.</label>
+                <input type="text" name="employee_id" placeholder="e.g. SEC-FAC-001" required>
+            </div>
+
+            <div class="input-group">
+                <label>Work Email</label>
+                <input type="email" name="email" placeholder="name@organization.com" required>
+            </div>
+
+            <div class="section-title">02 // The Facility</div>
+
+            <div class="input-group">
+                <label>Organization Name</label>
+                <input type="text" name="org_name" placeholder="e.g. Saveetha Engineering College" required>
+            </div>
+
+            <div class="input-group">
+                <label>Facility Type</label>
+                <select name="facility_type">
+                    <option value="Educational">Educational Campus</option>
+                    <option value="Hospital">Hospital / Healthcare</option>
+                    <option value="Corporate">Corporate Office</option>
+                    <option value="Mall">Shopping Mall</option>
+                    <option value="Other">Other Infrastructure</option>
+                </select>
+            </div>
+
+            <div class="input-group">
+                <label>Total Number of Floors</label>
+                <input type="number" name="total_floors" placeholder="e.g. 5" min="1" required>
+            </div>
+
+            <div class="input-group">
+                <label>Approx. Area (sq. ft)</label>
+                <input type="number" name="area_sqft" placeholder="Optional">
+            </div>
+
+            <div class="section-title">03 // Security Credentials</div>
+
+            <div class="input-group">
+                <label>Create Password</label>
+                <input type="password" name="password" required>
+            </div>
+
+            <div class="input-group">
+                <label>Confirm Password</label>
+                <input type="password" name="confirm_password" required>
+            </div>
+
+            <button type="submit" class="btn-submit">Submit Registration Application</button>
+
+            <div class="login-link">
+                Already hold an Admin ID? <a href="/login-admin">Access Dashboard</a>
+            </div>
+
+        </form>
+    </div>
+
+</body>
+</html>
