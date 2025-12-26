@@ -1,5 +1,7 @@
-# Tracelets - Indoor Navigation System
+# Tracelets - Tracing from Maps & Blueprints
 > **Pin. Trace. Navigate.**
+
+## Indoor Navigation System
 
 **Tracelets** is a hardware-free indoor navigation platform designed to help users navigate complex infrastructures—such as universities, hospitals, and malls—using digital blueprints. Unlike GPS, which fails indoors, Tracelets uses graph-based pathfinding algorithms to provide accurate room-to-room directions.
 
@@ -50,6 +52,7 @@ This repository contains the MVP (Minimum Viable Product) featuring a fully func
   │     ├── index.html        # Landing Page
   │     ├── image_nav.html    # A* Image Navigation Tool
   │     ├── dashboard-user.html
+  |     |── dashboard-admin.html
   │     └── /clients/saveetha # Custom Module for Pilot Client
   ```
 
